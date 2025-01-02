@@ -123,7 +123,10 @@ app.get('/test-data', async (req: Request, res: Response) => {
   }
 });
 
-// ... rest of your endpoints ...
+app.get('/', (req: Request, res: Response) => {
+  res.send('Gauntlet AI API, running on port ' + port);
+  res.status(200);
+});
 
 app.listen(port, () => {
   logger.info('Server started', {
