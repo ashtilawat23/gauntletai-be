@@ -1,8 +1,9 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import pool from './config/database';
 import logger from './utils/logger';
+import projectRoutes from './routes/project/projectRoutes';
 
 dotenv.config();
 
@@ -24,6 +25,9 @@ morgan.token('response-time', (req: Request & { _startAt?: [number, number] }, r
 app.use(morgan(':method :url :status :response-time ms - :res[content-length] bytes'));
 
 app.use(express.json());
+
+// Routes
+app.use('/api/projects', projectRoutes);
 
 // Health check endpoint with enhanced logging
 app.get('/health', async (req: Request, res: Response) => {
