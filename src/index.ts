@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import pool from './config/database';
 import logger from './utils/logger';
 import projectRoutes from './routes/project/projectRoutes';
+import resourceRoutes from './routes/resource/resourceRoutes';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/projects', projectRoutes);
+app.use('/api/resources', resourceRoutes);
 
 // Health check endpoint with enhanced logging
 app.get('/health', async (req: Request, res: Response) => {
