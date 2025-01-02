@@ -5,7 +5,7 @@ import pool from './config/database';
 import logger from './utils/logger';
 import projectRoutes from './routes/project/projectRoutes';
 import resourceRoutes from './routes/resource/resourceRoutes';
-
+import webhookRoutes from './routes/webhook/clerkWebhook';
 dotenv.config();
 
 const app = express();
@@ -30,6 +30,7 @@ app.use(express.json());
 // Routes
 app.use('/api/projects', projectRoutes);
 app.use('/api/resources', resourceRoutes);
+app.use('/webhook', webhookRoutes);
 
 // Health check endpoint with enhanced logging
 app.get('/health', async (req: Request, res: Response) => {

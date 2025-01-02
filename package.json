@@ -8,10 +8,6 @@
     "build": "tsc",
     "migrate": "ts-node src/db/migrate.ts",
     "seed": "ts-node src/db/seed.ts",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "setup:test": "ts-node src/db/setup-test.ts",
     "db:reset": "ts-node src/db/reset.ts"
   },
   "keywords": [],
@@ -30,6 +26,7 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^5.1.4",
     "@types/express": "^5.0.0",
     "@types/pg": "^8.11.10",
     "dotenv": "^16.4.7",
@@ -38,6 +35,7 @@
     "morgan": "^1.10.0",
     "pg": "^8.13.1",
     "pg-promise": "^11.10.2",
+    "svix": "^1.44.0",
     "winston": "^3.17.0"
   }
 }
