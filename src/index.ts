@@ -1,48 +1,102 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
 import pool from './config/database';
+import logger from './utils/logger';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(express.json());
-
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to Gauntlet AI API',
-    version: '1.0.0',
-    status: 'online'
-  });
+// Custom morgan token for response time
+morgan.token('response-time', (req: Request & { _startAt?: [number, number] }, res: Response & { _startAt?: [number, number] }) => {
+  if (!req._startAt || !res._startAt) {
+    // Missing request/response start time
+    return '';
+  }
+  // Calculate time in milliseconds
+  const ms = (res._startAt[0] - req._startAt[0]) * 1000 + (res._startAt[1] - req._startAt[1]) * 1e-6;
+  return ms.toFixed(3);
 });
 
-// Health check endpoint
-app.get('/health', async (req, res) => {
+// More detailed morgan logging format
+app.use(morgan(':method :url :status :response-time ms - :res[content-length] bytes'));
+
+app.use(express.json());
+
+// Health check endpoint with enhanced logging
+app.get('/health', async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  logger.info('Health check initiated', {
+    endpoint: '/health',
+    method: 'GET',
+    requestId: req.headers['x-request-id'] || Date.now()
+  });
+
   try {
     const result = await pool.query('SELECT NOW()');
+    const responseTime = Date.now() - startTime;
+
+    logger.info('Health check completed', {
+      responseTime,
+      dbTimestamp: result.rows[0].now
+    });
+
     res.json({
       status: 'ok',
       timestamp: result.rows[0].now,
-      message: 'Database connection successful'
+      responseTime: `${responseTime}ms`,
+      message: 'Database connection successful',
+      service: 'Gauntlet AI API'
     });
   } catch (error) {
+    logger.error('Health check failed', {
+      error: (error as Error).message,
+      stack: (error as Error).stack,
+      timeTaken: Date.now() - startTime
+    });
+
     res.status(500).json({
       status: 'error',
       message: 'Database connection failed',
-      error: error.message
+      error: (error as Error).message
     });
   }
 });
 
-// Test data endpoint to view seeded data
-app.get('/test-data', async (req, res) => {
+// Test data endpoint with more detailed logging
+app.get('/test-data', async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  logger.info('Fetching test data - Request started', {
+    endpoint: '/test-data',
+    method: 'GET',
+    requestId: req.headers['x-request-id'] || Date.now()
+  });
+
   try {
     const cohorts = await pool.query('SELECT * FROM cohorts');
+    logger.debug('Fetched cohorts data', { count: cohorts.rowCount });
+
     const users = await pool.query('SELECT * FROM users');
+    logger.debug('Fetched users data', { count: users.rowCount });
+
     const resources = await pool.query('SELECT * FROM resources');
+    logger.debug('Fetched resources data', { count: resources.rowCount });
+
     const submissions = await pool.query('SELECT * FROM project_submissions');
+    logger.debug('Fetched submissions data', { count: submissions.rowCount });
+
+    const responseTime = Date.now() - startTime;
+    logger.info('Test data fetch completed', {
+      responseTime,
+      totalRecords: {
+        cohorts: cohorts.rowCount,
+        users: users.rowCount,
+        resources: resources.rowCount,
+        submissions: submissions.rowCount
+      }
+    });
 
     res.json({
       cohorts: cohorts.rows,
@@ -51,6 +105,12 @@ app.get('/test-data', async (req, res) => {
       submissions: submissions.rows
     });
   } catch (error) {
+    logger.error('Failed to fetch test data', {
+      error: (error as Error).message,
+      stack: (error as Error).stack,
+      timeTaken: Date.now() - startTime
+    });
+
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch test data',
@@ -59,6 +119,12 @@ app.get('/test-data', async (req, res) => {
   }
 });
 
+// ... rest of your endpoints ...
+
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  logger.info('Server started', {
+    port,
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
 });
